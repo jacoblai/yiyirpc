@@ -2,32 +2,33 @@ package yiyirpc
 
 import (
 	"testing"
-	"strconv"
 	"time"
 	"fmt"
 	"log"
+	"io/ioutil"
 )
 
 func TestListenRPC(t *testing.T) {
 	srv := RpcServer{}
 	srv.Register(NewWorker())
 	go srv.ListenRPC(":4200")
-	N := 1000
+	N := 10
 	mapChan := make(chan int, N)
+	bts, _:= ioutil.ReadFile(`C:\Users\jac\Desktop\缺失资料\缺失资料.zip`)
 	for i := 0; i < N; i++ {
-		//go func(i int) {
+		go func(i int) {
 			client := RpcCleint{}
 			var rep []byte
 			nt := time.Now()
-			err := client.Call("localhost:4200", "Worker.DoJob", []byte(strconv.Itoa(i)), &rep)
+			err := client.Call("localhost:4200", "Worker.DoJob", bts, &rep)
 			if err != nil {
 				t.Error(err)
 			} else {
 				sub := time.Now().Sub(nt)
-				fmt.Println(i, rep, sub)
+				fmt.Println(i, string(rep), sub)
 			}
 			mapChan <- i
-		//}(i)
+		}(i)
 	}
 	for i := 0; i < N; i++ {
 		<-mapChan
@@ -43,7 +44,7 @@ func NewWorker() *Worker {
 }
 
 func (w *Worker) DoJob(task []byte, reply *[]byte) error {
-	log.Println("Worker: do job", string(task))
+	log.Println("Worker: do job", len(task))
 	//time.Sleep(time.Second * 3)
 	*reply = []byte("OK")
 	return nil

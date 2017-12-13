@@ -5,15 +5,15 @@ import (
 	"time"
 	"fmt"
 	"bufio"
-	"encoding/gob"
 	"net/rpc"
 	"io"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type gobClientCodec struct {
 	rwc    io.ReadWriteCloser
-	dec    *gob.Decoder
-	enc    *gob.Encoder
+	dec    *msgpack.Decoder
+	enc    *msgpack.Encoder
 	encBuf *bufio.Writer
 }
 
@@ -48,7 +48,7 @@ func (r *RpcCleint) Call(srv string, rpcname string, args interface{}, reply int
 		return fmt.Errorf("ConnectError: %s", err.Error())
 	}
 	encBuf := bufio.NewWriter(conn)
-	codec := &gobClientCodec{conn, gob.NewDecoder(conn), gob.NewEncoder(encBuf), encBuf}
+	codec := &gobClientCodec{conn, msgpack.NewDecoder(conn), msgpack.NewEncoder(encBuf), encBuf}
 	c := rpc.NewClientWithCodec(codec)
 	err = c.Call(rpcname, args, reply)
 	errc := c.Close()
