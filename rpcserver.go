@@ -68,6 +68,10 @@ func (c *gobServerCodec) Close() error {
 type RpcServer struct {
 }
 
+func NewRpcServer() *RpcServer {
+	return &RpcServer{}
+}
+
 func (f *RpcServer) Register(wk interface{}) {
 	rpc.Register(wk)
 }

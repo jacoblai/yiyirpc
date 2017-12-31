@@ -9,15 +9,15 @@ import (
 )
 
 func TestListenRPC(t *testing.T) {
-	srv := RpcServer{}
+	srv := NewRpcServer()
 	srv.Register(NewWorker())
 	go srv.ListenRPC(":4200")
 	N := 10
 	mapChan := make(chan int, N)
-	bts, _:= ioutil.ReadFile(`C:\Users\jac\Desktop\缺失资料\缺失资料.zip`)
+	bts, _:= ioutil.ReadFile(`/Users/lidonghai/Downloads/NavicatPremium.zip`)
 	for i := 0; i < N; i++ {
 		go func(i int) {
-			client := RpcCleint{}
+			client := NewRpcClient(120)
 			var rep []byte
 			nt := time.Now()
 			err := client.Call("localhost:4200", "Worker.DoJob", bts, &rep)
