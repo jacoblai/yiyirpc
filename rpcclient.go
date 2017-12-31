@@ -43,7 +43,7 @@ type RpcCleint struct {
 }
 
 func (r *RpcCleint) Call(srv string, rpcname string, args interface{}, reply interface{}) error {
-	conn, err := net.DialTimeout("tcp", srv, time.Second*1)
+	conn, err := net.DialTimeout("tcp", srv, 120*time.Millisecond)
 	if err != nil {
 		return fmt.Errorf("ConnectError: %s", err.Error())
 	}
