@@ -11,7 +11,7 @@ import (
 func TestListenRPC(t *testing.T) {
 	srv := NewRpcServer()
 	srv.Register(NewWorker())
-	go srv.ListenRPC(":4200")
+	go srv.ListenRPC(4200)
 	N := 10
 	mapChan := make(chan int, N)
 	bts, _:= ioutil.ReadFile(`/Users/lidonghai/Downloads/NavicatPremium.zip`)

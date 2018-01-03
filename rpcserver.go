@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"gopkg.in/vmihailenco/msgpack.v2"
+	"strconv"
 )
 
 func TimeoutCoder(f func(...interface{}) error, e interface{}, msg string) error {
@@ -76,8 +77,8 @@ func (f *RpcServer) Register(wk interface{}) {
 	rpc.Register(wk)
 }
 
-func (f *RpcServer) ListenRPC(addr string) {
-	l, err := net.Listen("tcp", addr)
+func (f *RpcServer) ListenRPC(port int) {
+	l, err := net.Listen("tcp", ":" + strconv.Itoa(port))
 	if err != nil {
 		log.Fatal("Error: listen error:", err)
 	}
