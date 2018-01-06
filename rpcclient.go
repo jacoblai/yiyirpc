@@ -50,7 +50,7 @@ func NewRpcClient(DialTimeout int) *RpcClient {
 }
 
 func (r *RpcClient) Call(srv string, rpcname string, args interface{}, reply interface{}) error {
-	conn, err := net.DialTimeout("tcp", srv, 120*time.Millisecond)
+	conn, err := net.DialTimeout("tcp", srv, r.DialTimeout)
 	if err != nil {
 		return fmt.Errorf("ConnectError: %s", err.Error())
 	}
