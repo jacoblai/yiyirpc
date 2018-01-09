@@ -106,3 +106,33 @@ func (f *RpcServer) ListenRPC(port int) {
 		}
 	}()
 }
+
+func (f *RpcServer) ListenRPCFullUrl(url string) {
+	l, err := net.Listen("tcp", url)
+	if err != nil {
+		log.Fatal("Error: listen error:", err)
+	}
+	go func() {
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				log.Print("Error: accept rpc connection", err.Error())
+				continue
+			}
+			go func(conn net.Conn) {
+				buf := bufio.NewWriter(conn)
+				srv := &gobServerCodec{
+					rwc:    conn,
+					dec:    msgpack.NewDecoder(conn),
+					enc:    msgpack.NewEncoder(buf),
+					encBuf: buf,
+				}
+				err = rpc.ServeRequest(srv)
+				if err != nil {
+					log.Print("Error: server rpc request", err.Error())
+				}
+				srv.Close()
+			}(conn)
+		}
+	}()
+}
