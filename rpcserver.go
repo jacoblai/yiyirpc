@@ -90,7 +90,29 @@ func (f *RpcServer) ListenRPC(port int) {
 		log.Println("Error: listen error:", err)
 	} else {
 		f.l = l
-		f.listen()
+		go func() {
+			for {
+				conn, err := l.Accept()
+				if err != nil {
+					log.Println("Error: accept rpc connection", err.Error())
+					continue
+				}
+				go func(conn net.Conn) {
+					buf := bufio.NewWriter(conn)
+					srv := &gobServerCodec{
+						rwc:    conn,
+						dec:    msgpack.NewDecoder(conn),
+						enc:    msgpack.NewEncoder(buf),
+						encBuf: buf,
+					}
+					err = rpc.ServeRequest(srv)
+					if err != nil {
+						log.Println("Error: server rpc request", err.Error())
+					}
+					srv.Close()
+				}(conn)
+			}
+		}()
 	}
 }
 
@@ -100,32 +122,28 @@ func (f *RpcServer) ListenRPCFullUrl(url string) {
 		log.Println("Error: listen error:", err)
 	} else {
 		f.l = l
-		f.listen()
-	}
-}
-
-func (f *RpcServer) listen() {
-	go func() {
-		for {
-			conn, err := f.l.Accept()
-			if err != nil {
-				log.Println("Error: accept rpc connection", err.Error())
-				continue
-			}
-			go func(conn net.Conn) {
-				buf := bufio.NewWriter(conn)
-				srv := &gobServerCodec{
-					rwc:    conn,
-					dec:    msgpack.NewDecoder(conn),
-					enc:    msgpack.NewEncoder(buf),
-					encBuf: buf,
-				}
-				err = rpc.ServeRequest(srv)
+		go func() {
+			for {
+				conn, err := l.Accept()
 				if err != nil {
-					log.Println("Error: server rpc request", err.Error())
+					log.Println("Error: accept rpc connection", err.Error())
+					continue
 				}
-				srv.Close()
-			}(conn)
-		}
-	}()
+				go func(conn net.Conn) {
+					buf := bufio.NewWriter(conn)
+					srv := &gobServerCodec{
+						rwc:    conn,
+						dec:    msgpack.NewDecoder(conn),
+						enc:    msgpack.NewEncoder(buf),
+						encBuf: buf,
+					}
+					err = rpc.ServeRequest(srv)
+					if err != nil {
+						log.Println("Error: server rpc request", err.Error())
+					}
+					srv.Close()
+				}(conn)
+			}
+		}()
+	}
 }
