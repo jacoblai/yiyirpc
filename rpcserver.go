@@ -67,6 +67,7 @@ func (c *gobServerCodec) Close() error {
 }
 
 type RpcServer struct {
+	l net.Listener
 }
 
 func NewRpcServer() *RpcServer {
@@ -77,44 +78,36 @@ func (f *RpcServer) Register(wk interface{}) {
 	rpc.Register(wk)
 }
 
+func (f *RpcServer) Close() {
+	if f.l != nil {
+		f.l.Close()
+	}
+}
+
 func (f *RpcServer) ListenRPC(port int) {
-	l, err := net.Listen("tcp", ":" + strconv.Itoa(port))
+	l, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Println("Error: listen error:", err)
+	} else {
+		f.l = l
+		f.listen()
 	}
-	go func() {
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				log.Println("Error: accept rpc connection", err.Error())
-				continue
-			}
-			go func(conn net.Conn) {
-				buf := bufio.NewWriter(conn)
-				srv := &gobServerCodec{
-					rwc:    conn,
-					dec:    msgpack.NewDecoder(conn),
-					enc:    msgpack.NewEncoder(buf),
-					encBuf: buf,
-				}
-				err = rpc.ServeRequest(srv)
-				if err != nil {
-					log.Println("Error: server rpc request", err.Error())
-				}
-				srv.Close()
-			}(conn)
-		}
-	}()
 }
 
 func (f *RpcServer) ListenRPCFullUrl(url string) {
 	l, err := net.Listen("tcp", url)
 	if err != nil {
 		log.Println("Error: listen error:", err)
+	} else {
+		f.l = l
+		f.listen()
 	}
+}
+
+func (f *RpcServer) listen() {
 	go func() {
 		for {
-			conn, err := l.Accept()
+			conn, err := f.l.Accept()
 			if err != nil {
 				log.Println("Error: accept rpc connection", err.Error())
 				continue
