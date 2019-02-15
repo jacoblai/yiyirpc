@@ -1,15 +1,15 @@
 package yiyirpc
 
 import (
+	"bufio"
+	"fmt"
+	"gopkg.in/vmihailenco/msgpack.v2"
+	"io"
 	"log"
 	"net"
-	"bufio"
 	"net/rpc"
-	"time"
-	"fmt"
-	"io"
-	"gopkg.in/vmihailenco/msgpack.v2"
 	"strconv"
+	"time"
 )
 
 func TimeoutCoder(f func(...interface{}) error, e interface{}, msg string) error {
@@ -23,7 +23,7 @@ func TimeoutCoder(f func(...interface{}) error, e interface{}, msg string) error
 	}
 }
 
-type gobServerCodec struct {
+type yiyiServerCodec struct {
 	rwc    io.ReadWriteCloser
 	dec    *msgpack.Decoder
 	enc    *msgpack.Encoder
@@ -31,15 +31,15 @@ type gobServerCodec struct {
 	closed bool
 }
 
-func (c *gobServerCodec) ReadRequestHeader(r *rpc.Request) error {
+func (c *yiyiServerCodec) ReadRequestHeader(r *rpc.Request) error {
 	return TimeoutCoder(c.dec.Decode, r, "server read request header")
 }
 
-func (c *gobServerCodec) ReadRequestBody(body interface{}) error {
+func (c *yiyiServerCodec) ReadRequestBody(body interface{}) error {
 	return TimeoutCoder(c.dec.Decode, body, "server read request body")
 }
 
-func (c *gobServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err error) {
+func (c *yiyiServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err error) {
 	if err = TimeoutCoder(c.enc.Encode, r, "server write response"); err != nil {
 		if c.encBuf.Flush() == nil {
 			log.Println("rpc: gob error encoding response:", err)
@@ -57,7 +57,7 @@ func (c *gobServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err e
 	return c.encBuf.Flush()
 }
 
-func (c *gobServerCodec) Close() error {
+func (c *yiyiServerCodec) Close() error {
 	if c.closed {
 		// Only call c.rwc.Close once; otherwise the semantics are undefined.
 		return nil
@@ -78,7 +78,7 @@ func (f *RpcServer) Register(wk interface{}) {
 }
 
 func (f *RpcServer) ListenRPC(port int) {
-	l, err := net.Listen("tcp", ":" + strconv.Itoa(port))
+	l, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Println("Error: listen error:", err)
 	}
@@ -91,7 +91,7 @@ func (f *RpcServer) ListenRPC(port int) {
 			}
 			go func(conn net.Conn) {
 				buf := bufio.NewWriter(conn)
-				srv := &gobServerCodec{
+				srv := &yiyiServerCodec{
 					rwc:    conn,
 					dec:    msgpack.NewDecoder(conn),
 					enc:    msgpack.NewEncoder(buf),
@@ -121,7 +121,7 @@ func (f *RpcServer) ListenRPCFullUrl(url string) {
 			}
 			go func(conn net.Conn) {
 				buf := bufio.NewWriter(conn)
-				srv := &gobServerCodec{
+				srv := &yiyiServerCodec{
 					rwc:    conn,
 					dec:    msgpack.NewDecoder(conn),
 					enc:    msgpack.NewEncoder(buf),

@@ -1,23 +1,23 @@
 package yiyirpc
 
 import (
-	"net"
-	"time"
-	"fmt"
 	"bufio"
-	"net/rpc"
-	"io"
+	"fmt"
 	"gopkg.in/vmihailenco/msgpack.v2"
+	"io"
+	"net"
+	"net/rpc"
+	"time"
 )
 
-type gobClientCodec struct {
+type yiyiClientCodec struct {
 	rwc    io.ReadWriteCloser
 	dec    *msgpack.Decoder
 	enc    *msgpack.Encoder
 	encBuf *bufio.Writer
 }
 
-func (c *gobClientCodec) WriteRequest(r *rpc.Request, body interface{}) (err error) {
+func (c *yiyiClientCodec) WriteRequest(r *rpc.Request, body interface{}) (err error) {
 	if err = TimeoutCoder(c.enc.Encode, r, "client write request"); err != nil {
 		return
 	}
@@ -27,15 +27,15 @@ func (c *gobClientCodec) WriteRequest(r *rpc.Request, body interface{}) (err err
 	return c.encBuf.Flush()
 }
 
-func (c *gobClientCodec) ReadResponseHeader(r *rpc.Response) error {
+func (c *yiyiClientCodec) ReadResponseHeader(r *rpc.Response) error {
 	return c.dec.Decode(r)
 }
 
-func (c *gobClientCodec) ReadResponseBody(body interface{}) error {
+func (c *yiyiClientCodec) ReadResponseBody(body interface{}) error {
 	return c.dec.Decode(body)
 }
 
-func (c *gobClientCodec) Close() error {
+func (c *yiyiClientCodec) Close() error {
 	return c.rwc.Close()
 }
 
@@ -55,7 +55,7 @@ func (r *RpcClient) Call(srv string, rpcname string, args interface{}, reply int
 		return fmt.Errorf("ConnectError: %s", err.Error())
 	}
 	encBuf := bufio.NewWriter(conn)
-	codec := &gobClientCodec{conn, msgpack.NewDecoder(conn), msgpack.NewEncoder(encBuf), encBuf}
+	codec := &yiyiClientCodec{conn, msgpack.NewDecoder(conn), msgpack.NewEncoder(encBuf), encBuf}
 	c := rpc.NewClientWithCodec(codec)
 	err = c.Call(rpcname, args, reply)
 	errc := c.Close()

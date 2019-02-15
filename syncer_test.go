@@ -1,11 +1,11 @@
 package yiyirpc
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"testing"
 	"time"
-	"fmt"
-	"log"
-	"io/ioutil"
 )
 
 func TestListenRPC(t *testing.T) {
@@ -14,7 +14,7 @@ func TestListenRPC(t *testing.T) {
 	go srv.ListenRPC(4200)
 	N := 10
 	mapChan := make(chan int, N)
-	bts, _:= ioutil.ReadFile(`/Users/lidonghai/Downloads/NavicatPremium.zip`)
+	bts, _ := ioutil.ReadFile(`/Users/lidonghai/Downloads/NavicatPremium.zip`)
 	for i := 0; i < N; i++ {
 		go func(i int) {
 			client := NewRpcClient(120)
